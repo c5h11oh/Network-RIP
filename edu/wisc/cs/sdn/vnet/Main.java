@@ -96,7 +96,7 @@ public class Main
 
 		// Read messages from the server until the server closes the connection
 		System.out.println("<-- Ready to process packets -->");
-		System.out.println((Router)dev).routeTable.toString());
+		System.out.println(((Router)dev).getRouteTable().toString());
 		while (vnsComm.readFromServer());
 		
 		// Shutdown the router
