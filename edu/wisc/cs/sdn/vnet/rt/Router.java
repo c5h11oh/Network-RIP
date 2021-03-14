@@ -54,6 +54,12 @@ public class Router extends Device
 		System.out.println("-------------------------------------------------");
 	}
 
+	public void initializeRouteTable(){
+		for (Iface iface : this.interfaces.values()){
+			this.routeTable.insert(iface.getIpAddress(), 0, iface.getSubnetMask(), iface);
+		}
+	}
+
 	/**
 	 * Load a new ARP cache from a file.
 	 * @param arpCacheFile the name of the file containing the ARP cache

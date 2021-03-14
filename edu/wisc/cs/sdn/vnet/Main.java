@@ -88,6 +88,9 @@ public class Main
 			// Read static route table
 			if (routeTableFile != null)
 			{ ((Router)dev).loadRouteTable(routeTableFile); }
+			else{
+				((Router)dev).initializeRouteTable();
+			}
 			
 			// Read static ACP cache
 			if (arpCacheFile != null)
@@ -96,7 +99,7 @@ public class Main
 
 		// Read messages from the server until the server closes the connection
 		System.out.println("<-- Ready to process packets -->");
-		System.out.println(((Router)dev).getRouteTable().toString());
+		// System.out.println(((Router)dev).getRouteTable().toString());
 		while (vnsComm.readFromServer());
 		
 		// Shutdown the router
