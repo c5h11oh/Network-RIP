@@ -6,6 +6,10 @@ import edu.wisc.cs.sdn.vnet.Iface;
 
 import net.floodlightcontroller.packet.Ethernet;
 import net.floodlightcontroller.packet.IPv4;
+import net.floodlightcontroller.packet.RIPv2;
+import net.floodlightcontroller.packet.RIPv2Entry;
+
+import java.util.*;
 
 /**
  * @author Aaron Gember-Jacobson and Anubhavnidhi Abhashkumar
@@ -17,6 +21,19 @@ public class Router extends Device
 
 	/** ARP cache for the router */
 	private ArpCache arpCache;
+	//distance vector table 
+	/*
+	protected short addressFamily;
+    protected short routeTag;
+	protected int address;
+	protected int subnetMask;
+	protected int nextHopAddress;
+	protected int metric;
+	*/
+	// private List<RIPv2Entry> dvTable;
+	//key is a list of IP address and mask; 
+	//value is a list of object: [int metrics, long initTime, boolean self, int nexthop]
+	private HashMap< List<Integer>, ArrayList<Object> > dvTable;
 
 	/**
 	 * Creates a router for a specific host.
@@ -58,6 +75,10 @@ public class Router extends Device
 		for (Iface iface : this.interfaces.values()){
 			this.routeTable.insert(iface.getIpAddress(), 0, iface.getSubnetMask(), iface);
 		}
+		//add direct neighbors to the dvTable 
+		//flood the entries 
+		//RIPv2Entry(int address, int subnetMask, int metric)
+		
 	}
 
 	/**
@@ -102,7 +123,7 @@ public class Router extends Device
 
 		/********************************************************************/
 	}
-
+	
 	private void handleIpPacket(Ethernet etherPacket, Iface inIface)
 	{
 		// Make sure it's an IP packet
@@ -137,8 +158,38 @@ public class Router extends Device
 			{ return; }
 		}
 
+		// Check if the packet is an RIPv2 packet
+		if (ipPacket.getProtocol() == IPv4.PROTOCOL_UDP && ipPacket.getDestinationAddress() == IPv4.toIPv4Address("224.0.0.9")){
+			handleRIPPacket((RIPv2)ipPacket.getPayload(), ipPacket.getSourceAddress());
+			return; // Do not forward
+		}
+
 		// Do route lookup and forward
 		this.forwardIpPacket(etherPacket, inIface);
+	}
+
+	private void handleRIPPacket(RIPv2 rip, int sourceAddr){
+		for (RIPv2Entry e: rip.getEntries()){
+			ArrayList<Integer> ls = new ArrayList<Integer>();
+			ls.add(e.getAddress()); 
+			ls.add(e.getSubnetMask());
+
+			ArrayList<Object> v = new ArrayList<Object>();
+			v.add(e.getMetric()+1);
+			v.add(System.currentTimeMillis());
+			v.add(false);
+			v.add(sourceAddr);
+
+			if(dvTable.containsKey(ls)){
+				if((int)dvTable.get(ls).get(0) > (int)v.get(0)){
+					dvTable.put(ls, v);
+				}
+			}
+			else{
+				dvTable.put(ls, v);
+			}
+			
+		}
 	}
 
 	private void forwardIpPacket(Ethernet etherPacket, Iface inIface)

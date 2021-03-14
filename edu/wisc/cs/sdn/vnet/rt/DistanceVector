@@ -1,0 +1,7 @@
+
+public class DistanceVector extends RIPv2Entry{
+    public RIPv2Entry(int address, int subnetMask, int metric){
+
+    }
+
+}
