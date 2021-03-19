@@ -5,11 +5,15 @@ import edu.wisc.cs.sdn.vnet.DumpFile;
 import edu.wisc.cs.sdn.vnet.Iface;
 
 import net.floodlightcontroller.packet.Ethernet;
+import net.floodlightcontroller.packet.IPacket;
 import net.floodlightcontroller.packet.IPv4;
 import net.floodlightcontroller.packet.RIPv2;
 import net.floodlightcontroller.packet.RIPv2Entry;
+import net.floodlightcontroller.packet.UDP;
+
 
 import java.util.*;
+import java.lang.System;
 
 /**
  * @author Aaron Gember-Jacobson and Anubhavnidhi Abhashkumar
@@ -71,12 +75,52 @@ public class Router extends Device
 		System.out.println("-------------------------------------------------");
 	}
 
+/*
+
+
+			ArrayList<Object> v = new ArrayList<Object>();
+			v.add(e.getMetric()+1); //updated path cost 
+			v.add(System.currentTimeMillis()); //time stamp
+			v.add(false); 
+			v.add(sourceAddr);
+*/
+
+	/*
+	This function initialize the router's route table when the router does not have a loaded route table 
+	It sends RIP request to all neighbors 
+	It will then start to send unsolicited response to all neighbors every 10s
+	*/
 	public void initializeRouteTable(){
+	
+
 		for (Iface iface : this.interfaces.values()){
+			
+			//init route table 
 			this.routeTable.insert(iface.getIpAddress(), 0, iface.getSubnetMask(), iface);
+			
+			RIPv2 initReq = new RIPv2();
+			initReq.setCommand(RIPv2.COMMAND_REQUEST);
+			UDP initUDP = new UDP();
+			initUDP.setPayload((IPacket)initReq); 
+			initUDP.setSourcePort(UDP.RIP_PORT);
+			initUDP.setDestinationPort(UDP.RIP_PORT); 
+			IPv4 initIPv4 = new IPv4();
+			initIPv4.setPayload((IPacket)initUDP); 
+			initIPv4.setProtocol(IPv4.PROTOCOL_UDP);
+			initIPv4.setDestinationAddress("224.0.0.9");
+			initIPv4.setSourceAddress(iface.getIpAddress()); 
+			Ethernet eth = new Ethernet();
+			eth.setPayload(initIPv4);
+			eth.setSourceMACAddress(iface.getMacAddress().toBytes());
+			eth.setDestinationMACAddress("FF:FF:FF:FF:FF:FF");
+			eth.setEtherType(Ethernet.TYPE_IPv4); 
+			forwardIpPacket( eth,  iface); 
+
 		}
-		//add direct neighbors to the dvTable 
-		//flood the entries 
+		
+		//send RIP request out all ifaces 
+
+		//flood unsolicited response out all ifaces  
 		//RIPv2Entry(int address, int subnetMask, int metric)
 		
 	}
@@ -170,14 +214,15 @@ public class Router extends Device
 
 	private void handleRIPPacket(RIPv2 rip, int sourceAddr){
 		for (RIPv2Entry e: rip.getEntries()){
+			
 			ArrayList<Integer> ls = new ArrayList<Integer>();
 			ls.add(e.getAddress()); 
 			ls.add(e.getSubnetMask());
 
 			ArrayList<Object> v = new ArrayList<Object>();
-			v.add(e.getMetric()+1);
-			v.add(System.currentTimeMillis());
-			v.add(false);
+			v.add(e.getMetric()+1); //updated path cost 
+			v.add(System.currentTimeMillis()); //time stamp
+			v.add(false); 
 			v.add(sourceAddr);
 
 			if(dvTable.containsKey(ls)){
