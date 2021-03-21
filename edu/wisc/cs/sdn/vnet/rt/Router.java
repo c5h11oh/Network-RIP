@@ -278,7 +278,6 @@ public class Router extends Device
 		// Check if the packet is an RIPv2 packet
 		if (ipPacket.getProtocol() == IPv4.PROTOCOL_UDP && ipPacket.getDestinationAddress() == IPv4.toIPv4Address("224.0.0.9")){
 			handleRIPPacket((RIPv2)ipPacket.getPayload().getPayload(), ipPacket.getSourceAddress());
-			System.out.println("received RIPv2 packet");
 			return; // Do not forward
 		}
 
@@ -289,7 +288,7 @@ public class Router extends Device
 
 	private void handleRIPPacket(RIPv2 rip, int sourceAddr){
 		// Debugging
-		System.out.println("called handleRIPPacket. \n rip packet content: " + rip + "\nsourceAddr: " + sourceAddr);
+		System.out.println("called handleRIPPacket. \nrip packet content: " + rip + "\nsourceAddr: " + IPv4.fromIPv4Address(sourceAddr));
 		// !Debugging
 
 		for (RIPv2Entry e: rip.getEntries()){
