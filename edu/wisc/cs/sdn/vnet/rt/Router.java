@@ -107,7 +107,7 @@ public class Router extends Device
 		//RIPv2Entry(int address, int subnetMask, int metric)
 		long updateTime = System.currentTimeMillis();
 		
-		while(dvTable != null & dvTable.size() !=0 ){
+		while(dvTable != null && dvTable.size() !=0 ){
 			//send update per 10 s
 			if(System.currentTimeMillis() >= updateTime){ 
 				//send the RIP packet to the neighbor 
