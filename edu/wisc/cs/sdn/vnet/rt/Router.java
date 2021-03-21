@@ -230,7 +230,7 @@ public class Router extends Device
 		// Make sure it's an IP packet
 		if (etherPacket.getEtherType() != Ethernet.TYPE_IPv4)
 		{ 
-			System.out.println("notIPv4");
+			System.out.println("Err: notIPv4");
 			return; }
 
 		// Get IP header
@@ -245,14 +245,14 @@ public class Router extends Device
 		short calcCksum = ipPacket.getChecksum();
 		if (origCksum != calcCksum)
 		{ 
-			System.out.println("checksum");
+			System.out.println("Err: checksum");
 			return; }
 
 		// Check TTL
 		ipPacket.setTtl((byte)(ipPacket.getTtl()-1));
 		if (0 == ipPacket.getTtl())
 		{ 
-			System.out.println("ttl=0");
+			System.out.println("Err: ttl=0");
 			return; }
 
 		// Reset checksum now that TTL is decremented
@@ -263,7 +263,7 @@ public class Router extends Device
 		{
 			if (ipPacket.getDestinationAddress() == iface.getIpAddress())
 			{ 
-				System.out.println("router interface");
+				System.out.println("Err: router interface");
 				return; }
 		}
 
@@ -275,6 +275,7 @@ public class Router extends Device
 		}
 
 		// Do route lookup and forward
+		System.out.println("handleIpPacket: forwardingIpPacket");
 		this.forwardIpPacket(etherPacket, inIface);
 	}
 
@@ -324,14 +325,14 @@ public class Router extends Device
 		// If no entry matched, do nothing
 		if (null == bestMatch)
 		{ 
-			System.out.println("bestmatch");
+			System.out.println("Err: bestmatch not found");
 			return; }
 
 		// Make sure we don't sent a packet back out the interface it came in
 		Iface outIface = bestMatch.getInterface();
 		if (outIface == inIface)
 		{ 
-			System.out.println("outeqin");
+			System.out.println("Err: outeqin");
 			return; }
 
 		// Set source MAC address in Ethernet header
@@ -346,7 +347,7 @@ public class Router extends Device
 		ArpEntry arpEntry = this.arpCache.lookup(nextHop);
 		if (null == arpEntry)
 		{ 
-			System.out.println("arpentry");
+			System.out.println("Err: arpentry");
 			return; }
 		etherPacket.setDestinationMACAddress(arpEntry.getMac().toBytes());
 
