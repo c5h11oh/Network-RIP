@@ -1,3 +1,7 @@
+### Our own
+.DS_Store
+
+### Given by GitHub
 # Compiled class file
 *.class
 
