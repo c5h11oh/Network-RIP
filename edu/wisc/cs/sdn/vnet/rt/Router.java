@@ -277,7 +277,7 @@ public class Router extends Device
 
 		// Check if the packet is an RIPv2 packet
 		if (ipPacket.getProtocol() == IPv4.PROTOCOL_UDP && ipPacket.getDestinationAddress() == IPv4.toIPv4Address("224.0.0.9")){
-			handleRIPPacket((RIPv2)ipPacket.getPayload(), ipPacket.getSourceAddress());
+			handleRIPPacket((RIPv2)ipPacket.getPayload().getPayload(), ipPacket.getSourceAddress());
 			System.out.println("received RIPv2 packet");
 			return; // Do not forward
 		}
