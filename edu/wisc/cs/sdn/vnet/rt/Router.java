@@ -157,10 +157,11 @@ public class Router extends Device
 	}
 
 	/*
-	This method encapsulates and forward a RIPv2 packet through a specific interface 
+	This method encapsulates and sends a RIPv2 packet through a specific interface 
 	// Do we "forward" a RIPv2 packet? -> use sendPacket instead of forwardIpPacket?
 	*/
 	public void encapToFlood(Iface iface, RIPv2 rip){
+		System.out.println("encapToFlood called");
 		UDP udp = new UDP();
 		udp.setPayload((IPacket)rip); 
 		udp.setSourcePort(UDP.RIP_PORT);
@@ -177,8 +178,11 @@ public class Router extends Device
 		eth.setSourceMACAddress(iface.getMacAddress().toBytes());
 		eth.setDestinationMACAddress("FF:FF:FF:FF:FF:FF");
 		eth.setEtherType(Ethernet.TYPE_IPv4); 
-
+		
+		System.out.println("Sending RIPv2 packet.");
+		System.out.println("RIPv2 packet info are:\n" + eth);
 		this.sendPacket( eth,  iface); // TODO: should it be sendPacket?
+		System.out.println("RIPv2 packet sent.\n");
 
 	}
 
