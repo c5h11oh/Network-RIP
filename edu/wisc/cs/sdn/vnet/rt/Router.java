@@ -48,6 +48,7 @@ public class Router extends Device
 		super(host,logfile);
 		this.routeTable = new RouteTable();
 		this.arpCache = new ArpCache();
+		this.dvTable = new HashMap< List<Integer>, ArrayList<Object> >();
 	}
 
 	/**
@@ -94,7 +95,9 @@ public class Router extends Device
 	It will then start to send unsolicited response to all neighbors every 10s
 	*/
 	public void initializeRouteTable(){
-	
+		// Debugging
+		System.out.println("initializeRouteTable called");
+		// ! Debugging
 
 		for (Iface iface : this.interfaces.values()){	
 			//init route table 
@@ -105,9 +108,13 @@ public class Router extends Device
 		//send RIP request out all ifaces 
 		floodRIPRequest(); 
 		//RIPv2Entry(int address, int subnetMask, int metric)
-		long updateTime = System.currentTimeMillis();
+		long updateTime = System.currentTimeMillis() + 10;
 		
 		while(dvTable != null && dvTable.size() !=0 ){
+			// Debugging
+			System.out.println("send out RIPv2 info");
+			// !Debugging
+
 			//send update per 10 s
 			if(System.currentTimeMillis() >= updateTime){ 
 				//send the RIP packet to the neighbor 
@@ -120,7 +127,7 @@ public class Router extends Device
 						//check if still have ttl
 						if(((int)values.get(1)+30)< System.currentTimeMillis()){
 							//check if need poison reverse 
-							if((int)values.get(3) == iface.getIpAddress()){
+							if((int)values.get(3) == iface.getIpAddress()){ // TODO: should be the receiver's IP address?
 								updateE = new RIPv2Entry(e.getKey().get(0),e.getKey().get(1), 16 );
 							}else{
 								updateE = new RIPv2Entry(e.getKey().get(0),e.getKey().get(1), (int) values.get(0)); 
@@ -151,6 +158,7 @@ public class Router extends Device
 
 	/*
 	This method encapsulates and forward a RIPv2 packet through a specific interface 
+	// Do we "forward" a RIPv2 packet? -> use sendPacket instead of forwardIpPacket?
 	*/
 	public void encapToFlood(Iface iface, RIPv2 rip){
 		UDP udp = new UDP();
@@ -170,7 +178,7 @@ public class Router extends Device
 		eth.setDestinationMACAddress("FF:FF:FF:FF:FF:FF");
 		eth.setEtherType(Ethernet.TYPE_IPv4); 
 
-		forwardIpPacket( eth,  iface); 
+		forwardIpPacket( eth,  iface); // TODO: should it be sendPacket?
 
 	}
 
@@ -221,7 +229,9 @@ public class Router extends Device
 	{
 		// Make sure it's an IP packet
 		if (etherPacket.getEtherType() != Ethernet.TYPE_IPv4)
-		{ return; }
+		{ 
+			System.out.println("notIPv4");
+			return; }
 
 		// Get IP header
 		IPv4 ipPacket = (IPv4)etherPacket.getPayload();
@@ -234,12 +244,16 @@ public class Router extends Device
 		ipPacket.deserialize(serialized, 0, serialized.length);
 		short calcCksum = ipPacket.getChecksum();
 		if (origCksum != calcCksum)
-		{ return; }
+		{ 
+			System.out.println("checksum");
+			return; }
 
 		// Check TTL
 		ipPacket.setTtl((byte)(ipPacket.getTtl()-1));
 		if (0 == ipPacket.getTtl())
-		{ return; }
+		{ 
+			System.out.println("ttl=0");
+			return; }
 
 		// Reset checksum now that TTL is decremented
 		ipPacket.resetChecksum();
@@ -248,12 +262,15 @@ public class Router extends Device
 		for (Iface iface : this.interfaces.values())
 		{
 			if (ipPacket.getDestinationAddress() == iface.getIpAddress())
-			{ return; }
+			{ 
+				System.out.println("router interface");
+				return; }
 		}
 
 		// Check if the packet is an RIPv2 packet
 		if (ipPacket.getProtocol() == IPv4.PROTOCOL_UDP && ipPacket.getDestinationAddress() == IPv4.toIPv4Address("224.0.0.9")){
 			handleRIPPacket((RIPv2)ipPacket.getPayload(), ipPacket.getSourceAddress());
+			System.out.println("received RIPv2 packet");
 			return; // Do not forward
 		}
 
@@ -262,6 +279,10 @@ public class Router extends Device
 	}
 
 	private void handleRIPPacket(RIPv2 rip, int sourceAddr){
+		// Debugging
+		System.out.println("called handleRIPPacket. \n rip packet content: " + rip + "\nsourceAddr: " + sourceAddr);
+		// !Debugging
+
 		for (RIPv2Entry e: rip.getEntries()){
 			
 			ArrayList<Integer> ls = new ArrayList<Integer>();
@@ -302,12 +323,16 @@ public class Router extends Device
 
 		// If no entry matched, do nothing
 		if (null == bestMatch)
-		{ return; }
+		{ 
+			System.out.println("bestmatch");
+			return; }
 
 		// Make sure we don't sent a packet back out the interface it came in
 		Iface outIface = bestMatch.getInterface();
 		if (outIface == inIface)
-		{ return; }
+		{ 
+			System.out.println("outeqin");
+			return; }
 
 		// Set source MAC address in Ethernet header
 		etherPacket.setSourceMACAddress(outIface.getMacAddress().toBytes());
@@ -320,7 +345,9 @@ public class Router extends Device
 		// Set destination MAC address in Ethernet header
 		ArpEntry arpEntry = this.arpCache.lookup(nextHop);
 		if (null == arpEntry)
-		{ return; }
+		{ 
+			System.out.println("arpentry");
+			return; }
 		etherPacket.setDestinationMACAddress(arpEntry.getMac().toBytes());
 
 		this.sendPacket(etherPacket, outIface);
