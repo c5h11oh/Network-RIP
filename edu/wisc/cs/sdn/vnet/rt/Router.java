@@ -178,7 +178,7 @@ public class Router extends Device
 		eth.setDestinationMACAddress("FF:FF:FF:FF:FF:FF");
 		eth.setEtherType(Ethernet.TYPE_IPv4); 
 
-		forwardIpPacket( eth,  iface); // TODO: should it be sendPacket?
+		this.sendPacket( eth,  iface); // TODO: should it be sendPacket?
 
 	}
 
@@ -220,6 +220,9 @@ public class Router extends Device
 			this.handleIpPacket(etherPacket, inIface);
 			break;
 		// Ignore all other packet types, for now
+		default:
+			System.out.println("Not an IPv4! Ignore.");
+			break;
 		}
 
 		/********************************************************************/
@@ -227,6 +230,7 @@ public class Router extends Device
 	
 	private void handleIpPacket(Ethernet etherPacket, Iface inIface)
 	{
+		System.out.println("handleIpPacket");
 		// Make sure it's an IP packet
 		if (etherPacket.getEtherType() != Ethernet.TYPE_IPv4)
 		{ 
