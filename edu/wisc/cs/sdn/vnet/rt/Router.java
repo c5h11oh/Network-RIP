@@ -25,16 +25,7 @@ public class Router extends Device
 
 	/** ARP cache for the router */
 	private ArpCache arpCache;
-	//distance vector table 
-	/*
-	protected short addressFamily;
-    protected short routeTag;
-	protected int address;
-	protected int subnetMask;
-	protected int nextHopAddress;
-	protected int metric;
-	*/
-	// private List<RIPv2Entry> dvTable;
+
 	//key is a list of IP address and mask; 
 	//value is a list of object: [int metrics, long initTime, boolean self, int nexthop]
 	private HashMap< List<Integer>, ArrayList<Object> > dvTable;
