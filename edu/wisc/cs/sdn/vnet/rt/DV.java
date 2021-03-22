@@ -91,7 +91,12 @@ public class DV {
     public RIPv2 toRIPv2(){
         RIPv2 r = new RIPv2();
         for (DVEntry e : this.entries){
-            r.addEntry(new RIPv2Entry(e.getIP(), e.getMask(), e.getMetric()));
+            RIPv2Entry ripE = new RIPv2Entry(e.getIP(), e.getMask(), e.getMetric()); 
+            ripE.setNextHopAddress(e.getNexthop()); 
+            r.addEntry(ripE);
+            System.out.print("In to RIPv4, add: ");
+            System.out.print(ripE); 
+            System.out.println();
         }
         return r;
     }

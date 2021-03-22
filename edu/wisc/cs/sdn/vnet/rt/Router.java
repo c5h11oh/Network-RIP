@@ -305,9 +305,12 @@ public class Router extends Device
 						DVEntry poison = e;
 						poison.setMetric(16);
 						updateTable.addEntry(poison);
+						System.out.println("in period flood: add: "+ poison);
 
 					}else{
 						updateTable.addEntry(e);
+						System.out.println("in period flood: add: "+ e);
+						
 					}
 				}
 

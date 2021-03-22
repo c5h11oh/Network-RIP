@@ -63,5 +63,10 @@ public class DVEntry {
         this.initTime = System.currentTimeMillis();
     }
 
+    public String toString(){
+        String s = String.format("dst ip = %d, nexthop = %d , metric = %d", this.ip, this.nexthop, this.metric);
+        return s; 
+    }
+
     
 }
