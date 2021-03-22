@@ -208,7 +208,8 @@ public class Router extends Device
 		// If no entry matched, do nothing
 		if (null == bestMatch)
 		{ 
-			System.out.println("Err: bestmatch not found");
+			System.out.println("Err: bestmatch not found. printing routeTable");
+			System.out.println(routeTable);
 			return; }
 
 		// Make sure we don't sent a packet back out the interface it came in
@@ -335,10 +336,10 @@ public class Router extends Device
 			
 			DVEntry dve = dvTable.findEntry(e.getAddress(), e.getSubnetMask());
 			if(dve != null){
-				if(e.getMetric() < dve.getMetric()){
+				if(e.getMetric() + 1 < dve.getMetric()){
 					// update dvTable
 					DVEntry dve2 = dve;
-					dve2.setMetric(e.getMetric());
+					dve2.setMetric(e.getMetric() + 1);
 					dvTable.replaceEntry(dve2);
 					
 					// update route table
