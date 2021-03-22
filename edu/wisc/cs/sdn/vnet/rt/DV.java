@@ -37,8 +37,8 @@ public class DV {
     /* Given the (ip, mask), find the entry. Delete it if outdated. */
     public DVEntry findEntry(int ip, int mask){
         for (DVEntry e : this.entries){
-            if(e.ip == ip && e.mask == mask){
-                if(e.isSelf() == false && System.currentTimeMillis() - e.initTime > TIMEOUT){
+            if(e.getIP() == ip && e.getMask() == mask){
+                if(e.isSelf() == false && System.currentTimeMillis() - e.getInitTime() > TIMEOUT){
                     assert this.entries.remove(e) == true;
                     return null;
                 }
@@ -53,7 +53,7 @@ public class DV {
     */
     public boolean renewEntry(int ip, int mask){
         for (DVEntry e : this.entries){
-            if(e.ip == ip && e.mask == mask){
+            if(e.getIP() == ip && e.getMask() == mask){
                 e.renew();
                 return true;
             }
@@ -66,8 +66,8 @@ public class DV {
     */
     public boolean replaceEntry(DVEntry f){
         for(DVEntry e : this.entries){
-            if(e.ip == f.ip && e.mask == f.mask){
-                e.setMetric(f.metric);
+            if(e.getIP() == f.getIP() && e.getMask() == f.getMask()){
+                e.setMetric(f.getMetric());
                 e.renew();
                 return true;
             }
@@ -91,7 +91,7 @@ public class DV {
     public RIPv2 toRIPv2(){
         RIPv2 r = new RIPv2();
         for (DVEntry e : this.entries){
-            r.addEntry(new RIPv2Entry(e.ip, e.mask, e.metric));
+            r.addEntry(new RIPv2Entry(e.getIP(), e.getMask(), e.getMetric()));
         }
         return r;
     }
@@ -104,7 +104,7 @@ public class DV {
         sb.append("IP\t\tMask\t\tMetric\t\tSelf\t\tNexthop\n");
         sb.append("=========================================\n");
         for (DVEntry e: entries){
-            sb.append("IP: " + IPv4.fromIPv4Address(e.ip) + ";\t" + IPv4.fromIPv4Address(e.mask) + ";\t" + e.metric + ";\t" + e.isSelf() + ";\t" + IPv4.fromIPv4Address(e.nexthop) + "\n");
+            sb.append("IP: " + IPv4.fromIPv4Address(e.getIP()) + ";\t" + IPv4.fromIPv4Address(e.getMask()) + ";\t" + e.getMetric() + ";\t" + e.isSelf() + ";\t" + IPv4.fromIPv4Address(e.getNexthop()) + "\n");
         }
         return sb.toString();
     }
