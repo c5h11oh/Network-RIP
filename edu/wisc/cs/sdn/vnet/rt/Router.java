@@ -88,10 +88,14 @@ public class Router extends Device
 		for (Iface iface : this.interfaces.values()){	
 			//init route table 
 			this.routeTable.insert(iface.getIpAddress(), 0, iface.getSubnetMask(), iface);
+			DVEntry selfE = new DVEntry(iface.getIpAddress(), iface.getSubnetMask(), 0, true, 0); 
+			dvTable.addEntry(selfE); 
 			
 		}	
 		//send RIP request out all ifaces 
 		floodRIPRequest(); 	
+		
+
 		
 	}
 
@@ -258,27 +262,52 @@ public class Router extends Device
 		// Debugging
 		System.out.println("called handleRIPPacket. \nrip packet content: " + rip + "\nsourceAddr: " + IPv4.fromIPv4Address(sourceAddr));
 		// !Debugging
-
+		
 		for (RIPv2Entry e: rip.getEntries()){
 			
-			ArrayList<Integer> ls = new ArrayList<Integer>();
-			ls.add(e.getAddress()); 
-			ls.add(e.getSubnetMask());
+			DVEntry dve = dvTable.findEntry(e.getAddress(), e.getSubnetMask());
+			if(dve != null){
+				if(e.getMetric() < dve.getMetric()){
+					DVEntry dve2 = dve;
+					dve2.setMetric(e.getMetric());
+					dvTable.replaceEntry(dve2);
 
-			ArrayList<Object> v = new ArrayList<Object>();
-			v.add(e.getMetric()+1); //updated path cost 
-			v.add(System.currentTimeMillis()); //time stamp
-			v.add(false); //TODO: should check 
-			v.add(sourceAddr);
-
-			if(dvTable.containsKey(ls)){
-				if((int)dvTable.get(ls).get(0) > (int)v.get(0)){
-					dvTable.put(ls, v);
+				}else{
+					dvTable.renewEntry(e.getAddress(), e.getSubnetMask()); 
+				}
+			}else{
+				//add entry
+				//DVEntry(int ip, int mask, int metric, boolean self, int nexthop)
+				boolean s = false; 
+				if(e.getMetric() ==0 ){
+					s = true; //direct neighbor 
+				}
+				if(e.getMetric() <16){
+					DVEntry dveNew = new DVEntry(e.getIpAddress(), e.getSubnetMask(), e.getMetric()+1, s,  sourceAddr ); 
+					dvTable.addEntry(dveNew); 
 				}
 			}
-			else{
-				dvTable.put(ls, v);
-			}
+				
+			
+			
+			
+			// ls.add(e.getAddress()); 
+			// ls.add(e.getSubnetMask());
+
+			// ArrayList<Object> v = new ArrayList<Object>();
+			// v.add(e.getMetric()+1); //updated path cost 
+			// v.add(System.currentTimeMillis()); //time stamp
+			// v.add(false); //TODO: should check 
+			// v.add(sourceAddr);
+
+			// if(dvTable.containsKey(ls)){
+			// 	if((int)dvTable.get(ls).get(0) > (int)v.get(0)){
+			// 		dvTable.put(ls, v);
+			// 	}
+			// }
+			// else{
+			// 	dvTable.put(ls, v);
+			// }
 			
 		}
 	}
