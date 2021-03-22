@@ -189,7 +189,7 @@ public class Router extends Device
 
 		// Check if the packet is an RIPv2 packet
 		if (ipPacket.getProtocol() == IPv4.PROTOCOL_UDP && ipPacket.getDestinationAddress() == IPv4.toIPv4Address("224.0.0.9")){
-			handleRIPPacket((RIPv2)ipPacket.getPayload().getPayload(), ipPacket.getSourceAddress());
+			handleRIPPacket((RIPv2)ipPacket.getPayload().getPayload(), ipPacket.getSourceAddress(), inIface);
 			return; // Do not forward
 		}
 
@@ -258,7 +258,7 @@ public class Router extends Device
 
 	}
 	
-	private void handleRIPPacket(RIPv2 rip, int sourceAddr){
+	private void handleRIPPacket(RIPv2 rip, int sourceAddr, Iface inIface){
 		// Debugging
 		System.out.println("called handleRIPPacket. \nrip packet content: " + rip + "\nsourceAddr: " + IPv4.fromIPv4Address(sourceAddr));
 		// !Debugging
@@ -271,6 +271,8 @@ public class Router extends Device
 					DVEntry dve2 = dve;
 					dve2.setMetric(e.getMetric());
 					dvTable.replaceEntry(dve2);
+					//update(int dstIp, int maskIp, int gwIp, Iface iface)
+					routeTable.update(dve2.getIP(), dve2.getMask(), 0, inIface); 
 
 				}else{
 					dvTable.renewEntry(e.getAddress(), e.getSubnetMask()); 
@@ -285,6 +287,8 @@ public class Router extends Device
 				if(e.getMetric() <16){
 					DVEntry dveNew = new DVEntry(e.getAddress(), e.getSubnetMask(), e.getMetric()+1, s,  sourceAddr ); 
 					dvTable.addEntry(dveNew); 
+					//insert(int dstIp, int gwIp, int maskIp, Iface iface)
+					routeTable.insert(dveNew.getIP(), 0, dveNew.getMask(), inIface); 
 				}
 			}
 				
