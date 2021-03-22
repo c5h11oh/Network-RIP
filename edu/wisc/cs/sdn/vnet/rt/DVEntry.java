@@ -17,14 +17,14 @@ public class DVEntry {
 
     public DVEntry(){}
 
-    public DVEntry(int ip, int mask, int metric, boolean self, int nexthop, Iface inIface){
+    public DVEntry(int ip, int mask, int metric, boolean self, int nexthop){
         this.ip = ip;
         this.mask = mask;
         this.metric = metric;
         this.self = self;
         this.nexthop = nexthop;
         this.initTime = System.currentTimeMillis();
-        this.inIface = inIface; 
+        //this.inIface = inIface; 
     }
 
     // IP, mask
@@ -47,13 +47,13 @@ public class DVEntry {
         return this.nexthop; 
     }
 
-    public void setIface(Iface iface){
-        this.inIface = iface; 
-    }
+    // public void setIface(Iface iface){
+    //     this.inIface = iface; 
+    // }
 
-    public Iface getInIface(){
-        return this.inIface; 
-    }
+    // public Iface getInIface(){
+    //     return this.inIface; 
+    // }
     
     // Inittime
     public long getInitTime(){
