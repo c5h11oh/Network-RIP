@@ -11,22 +11,14 @@ import net.floodlightcontroller.packet.RIPv2;
 import net.floodlightcontroller.packet.RIPv2Entry;
 import net.floodlightcontroller.packet.UDP;
 
-
-import java.util.*;
+// import java.util.*;
 import java.lang.System;
-import java.lang.Thread;
 
 /**
  * @author Aaron Gember-Jacobson and Anubhavnidhi Abhashkumar
  */
 public class Router extends Device
 {	
-	public class TestThread extends Thread {
-		public void run(){
-			System.out.println("MyThread test running");
-		}
-	}
-	
 	/** Routing table for the router */
 	private RouteTable routeTable;
 
@@ -88,6 +80,8 @@ public class Router extends Device
 		for (Iface iface : this.interfaces.values()){	
 			//init route table 
 			this.routeTable.insert(iface.getIpAddress(), 0, iface.getSubnetMask(), iface);
+			
+			// init dvTable
 			DVEntry selfE = new DVEntry(iface.getIpAddress(), iface.getSubnetMask(), 0, true, 0); 
 			dvTable.addEntry(selfE); 
 			
@@ -189,7 +183,7 @@ public class Router extends Device
 
 		// Check if the packet is an RIPv2 packet
 		if (ipPacket.getProtocol() == IPv4.PROTOCOL_UDP && ipPacket.getDestinationAddress() == IPv4.toIPv4Address("224.0.0.9")){
-			handleRIPPacket((RIPv2)ipPacket.getPayload().getPayload(), ipPacket.getSourceAddress());
+			handleRIPPacket((RIPv2)ipPacket.getPayload().getPayload(), ipPacket.getSourceAddress(), inIface);
 			return; // Do not forward
 		}
 
@@ -245,9 +239,14 @@ public class Router extends Device
 
 	// ================================ RIPv2 Logics ===================================
 	
-	/*
-		This method sends RIP request to all neighbors 
-	*/
+	// =================== Managing ===================
+	/* This function enables main() to ask Router dvTable cleanup. */
+	public void dvTableCleanUp(){
+		this.dvTable.cleanUp();
+	}
+	
+	// =================== Sending ===================
+	/* This method sends RIP request to all neighbors */
 	public void floodRIPRequest(){
 
 		for (Iface iface : this.interfaces.values()){
@@ -257,8 +256,74 @@ public class Router extends Device
 		}
 
 	}
-	
-	private void handleRIPPacket(RIPv2 rip, int sourceAddr){
+
+	/*
+	This method encapsulates and sends a RIPv2 packet through a specific interface 
+	*/
+	public void floodRIPPacket(Iface iface, RIPv2 rip){
+		System.out.println("floodRIPPacket called");
+		UDP udp = new UDP();
+		udp.setPayload((IPacket)rip); 
+		udp.setSourcePort(UDP.RIP_PORT);
+		udp.setDestinationPort(UDP.RIP_PORT); 
+
+		IPv4 initIPv4 = new IPv4();
+		initIPv4.setPayload((IPacket)udp); 
+		initIPv4.setProtocol(IPv4.PROTOCOL_UDP);
+		initIPv4.setDestinationAddress("224.0.0.9");
+		initIPv4.setSourceAddress(iface.getIpAddress()); 
+
+		Ethernet eth = new Ethernet();
+		eth.setPayload(initIPv4);
+		eth.setSourceMACAddress(iface.getMacAddress().toBytes());
+		eth.setDestinationMACAddress("FF:FF:FF:FF:FF:FF");
+		eth.setEtherType(Ethernet.TYPE_IPv4); 
+		
+		System.out.println("Sending RIPv2 packet.");
+		System.out.println("RIPv2 packet info are:\n" + eth);
+		this.sendPacket( eth,  iface);
+		System.out.println("RIPv2 packet sent.\n");
+
+	}
+
+	public void periodicRIPFlood(){
+		
+		if(dvTable != null && dvTable.size() !=0 ){
+			// Debugging
+			System.out.println("periodicRIPFlood");
+			// !Debugging
+			//send the RIP packet to the neighbor 
+			dvTable.cleanUp();
+			for (Iface iface : this.interfaces.values()){	
+				// List<RIPv2Entry> updateLs = new ArrayList<RIPv2Entry>(); 
+				//List<DVEntry> entries = dvTable.getEntries(); 
+
+				DV updateTable = new DV(); 
+
+				for(DVEntry e : dvTable.getEntries()){
+					if(e.getNexthop() == iface.getIpAddress()){
+						DVEntry poison = e;
+						poison.setMetric(16);
+						updateTable.addEntry(poison);
+
+					}else{
+						updateTable.addEntry(e);
+					}
+				}
+
+				//forward with this RIPEntry list 
+				RIPv2 updatePkt = updateTable.toRIPv2(); 
+				updatePkt.setCommand(RIPv2.COMMAND_RESPONSE);
+				//updatePkt.setEntries((List<RIPv2Entry>) updateLs); 
+				floodRIPPacket(iface, updatePkt); 
+			}
+		}
+		return; 
+	}
+
+	// =================== Receiving ===================
+
+	private void handleRIPPacket(RIPv2 rip, int sourceAddr, Iface inIface){
 		// Debugging
 		System.out.println("called handleRIPPacket. \nrip packet content: " + rip + "\nsourceAddr: " + IPv4.fromIPv4Address(sourceAddr));
 		// !Debugging
@@ -268,9 +333,13 @@ public class Router extends Device
 			DVEntry dve = dvTable.findEntry(e.getAddress(), e.getSubnetMask());
 			if(dve != null){
 				if(e.getMetric() < dve.getMetric()){
+					// update dvTable
 					DVEntry dve2 = dve;
 					dve2.setMetric(e.getMetric());
 					dvTable.replaceEntry(dve2);
+					
+					// update route table
+					assert true == routeTable.update(e.getAddress(), e.getSubnetMask(), 0, inIface);
 
 				}else{
 					dvTable.renewEntry(e.getAddress(), e.getSubnetMask()); 
@@ -312,72 +381,5 @@ public class Router extends Device
 		}
 	}
 
-	/*
-	This method encapsulates and sends a RIPv2 packet through a specific interface 
-	// Do we "forward" a RIPv2 packet? -> use sendPacket instead of forwardIpPacket?
-	*/
-	public void floodRIPPacket(Iface iface, RIPv2 rip){
-		System.out.println("floodRIPPacket called");
-		UDP udp = new UDP();
-		udp.setPayload((IPacket)rip); 
-		udp.setSourcePort(UDP.RIP_PORT);
-		udp.setDestinationPort(UDP.RIP_PORT); 
-
-		IPv4 initIPv4 = new IPv4();
-		initIPv4.setPayload((IPacket)udp); 
-		initIPv4.setProtocol(IPv4.PROTOCOL_UDP);
-		initIPv4.setDestinationAddress("224.0.0.9");
-		initIPv4.setSourceAddress(iface.getIpAddress()); 
-
-		Ethernet eth = new Ethernet();
-		eth.setPayload(initIPv4);
-		eth.setSourceMACAddress(iface.getMacAddress().toBytes());
-		eth.setDestinationMACAddress("FF:FF:FF:FF:FF:FF");
-		eth.setEtherType(Ethernet.TYPE_IPv4); 
-		
-		System.out.println("Sending RIPv2 packet.");
-		System.out.println("RIPv2 packet info are:\n" + eth);
-		this.sendPacket( eth,  iface); // TODO: should it be sendPacket?
-		System.out.println("RIPv2 packet sent.\n");
-
-	}
-
-	public void periodicRIPFlood(){
-		
-		if(dvTable != null && dvTable.size() !=0 ){
-			// Debugging
-			System.out.println("send out RIPv2 info");
-			// !Debugging
-			//send the RIP packet to the neighbor 
-			for (Iface iface : this.interfaces.values()){	
-				List<RIPv2Entry> updateLs = new ArrayList<RIPv2Entry>(); 
-				//List<DVEntry> entries = dvTable.getEntries(); 
-
-				dvTable.cleanUp(); 
-				DV updateTable = new DV(); 
-
-				for(DVEntry e : dvTable.getEntries()){
-					if(e.getNexthop() == iface.getIpAddress()){
-						DVEntry poison = e;
-						poison.setMetric(16);
-						updateTable.addEntry(poison);
-
-					}else{
-						updateTable.addEntry(e);
-					}
-				}
-
-				//forward with this RIPEntry list 
-				RIPv2 updatePkt = updateTable.toRIPv2(); 
-				updatePkt.setCommand(RIPv2.COMMAND_RESPONSE);
-				//updatePkt.setEntries((List<RIPv2Entry>) updateLs); 
-				floodRIPPacket(iface, updatePkt); 
-			}
-
-			
-		
-	}
-
-		return; 
-	}
+	
 }

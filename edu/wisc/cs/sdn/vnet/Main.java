@@ -100,7 +100,28 @@ public class Main
 		// Read messages from the server until the server closes the connection
 		System.out.println("<-- Ready to process packets -->");
 		System.out.println(((Router)dev).getRouteTable().toString());
-		while (vnsComm.readFromServer());
+		
+		long baseTime = System.currentTimeMillis(), curTime; // the current timestamp. keep comparing it with later's current time to get the elapsed time.
+		final int timeInterval = 10000; // one intervals time in millisecond
+		final int counterCountsTo = 3;
+		int intervalCounter = 0; // how many time intervals have elapsed
+
+		while (vnsComm.readFromServer()){
+			// Check if a time interval has elapsed
+			curTime = System.currentTimeMillis();
+			if(curTime - baseTime > timeInterval){
+				baseTime = curTime;
+				++intervalCounter;
+				// periodic flood RIPv2
+				((Router)dev).periodicRIPFlood();
+
+				if(intervalCounter >= counterCountsTo){
+					intervalCounter = 0;
+					// Cleanup
+					((Router)dev).dvTableCleanUp();
+				}
+			}
+		}
 		
 		// Shutdown the router
 		dev.destroy();
