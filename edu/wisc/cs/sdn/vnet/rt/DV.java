@@ -31,6 +31,7 @@ public class DV {
      */
     public void addEntry(DVEntry entry)
     { 
+        System.out.println("DV: addEntry: \n\t" + entry.toString());
         this.entries.add(entry); 
     }
 
@@ -39,6 +40,7 @@ public class DV {
         for (DVEntry e : this.entries){
             if(e.getIP() == ip && e.getMask() == mask){
                 if(e.isSelf() == false && System.currentTimeMillis() - e.getInitTime() > TIMEOUT){
+                    System.out.println("DV: findEntry: remove entry: \n\t" + e.toString());
                     assert this.entries.remove(e) == true;
                     return null;
                 }
@@ -68,7 +70,9 @@ public class DV {
         for(DVEntry e : this.entries){
             if(e.getIP() == f.getIP() && e.getMask() == f.getMask()){
                 e.setMetric(f.getMetric());
+                e.setNextHop(f.getNexthop());
                 e.renew();
+                System.out.println("DV: replace entry: \n\t" + e.toString());
                 return true;
             }
         }
@@ -82,6 +86,7 @@ public class DV {
         long currentTime = System.currentTimeMillis();
         for (DVEntry e : this.entries){
             if (e.isSelf() == false && currentTime - e.initTime > TIMEOUT){
+                System.out.println("DV: cleanUp: remove entry: \n\t" + e.toString());
                 assert this.entries.remove(e) == true;
             }
         }

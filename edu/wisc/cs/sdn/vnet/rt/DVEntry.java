@@ -1,5 +1,5 @@
 package edu.wisc.cs.sdn.vnet.rt;
-import edu.wisc.cs.sdn.vnet.Iface; 
+// import edu.wisc.cs.sdn.vnet.Iface; 
 
 import java.lang.System;
 
@@ -13,7 +13,7 @@ public class DVEntry {
     protected long initTime;
     protected boolean self;
     protected int nexthop;
-    protected Iface inIface; 
+    // protected Iface inIface; 
 
     public DVEntry(){}
 
@@ -46,6 +46,9 @@ public class DVEntry {
     public int getNexthop(){
         return this.nexthop; 
     }
+    public void setNextHop(int nextHop){
+        this.nexthop = nextHop;
+    } 
 
     // public void setIface(Iface iface){
     //     this.inIface = iface; 

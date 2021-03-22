@@ -74,7 +74,7 @@ public class Router extends Device
 	*/
 	public void initializeRouteTable(){
 		// Debugging
-		System.out.println("initializeRouteTable called");
+		// System.out.println("initializeRouteTable called");
 		// ! Debugging
 
 		for (Iface iface : this.interfaces.values()){	
@@ -131,9 +131,9 @@ public class Router extends Device
 			this.handleIpPacket(etherPacket, inIface);
 			break;
 		// Ignore all other packet types, for now
-		default:
-			System.out.println("Not an IPv4! Ignore.");
-			break;
+		// default:
+		// 	System.out.println("Not an IPv4! Ignore.");
+		// 	break;
 		}
 
 		/********************************************************************/
@@ -144,12 +144,12 @@ public class Router extends Device
 		// Make sure it's an IP packet
 		if (etherPacket.getEtherType() != Ethernet.TYPE_IPv4)
 		{ 
-			System.out.println("Err: notIPv4");
+			// System.out.println("Err: notIPv4");
 			return; }
 
 		// Get IP header
 		IPv4 ipPacket = (IPv4)etherPacket.getPayload();
-		System.out.println("Handle IP packet");
+		// System.out.println("Handle IP packet");
 
 		// Verify checksum
 		short origCksum = ipPacket.getChecksum();
@@ -159,14 +159,14 @@ public class Router extends Device
 		short calcCksum = ipPacket.getChecksum();
 		if (origCksum != calcCksum)
 		{ 
-			System.out.println("Err: checksum");
+			// System.out.println("Err: checksum");
 			return; }
 
 		// Check TTL
 		ipPacket.setTtl((byte)(ipPacket.getTtl()-1));
 		if (0 == ipPacket.getTtl())
 		{ 
-			System.out.println("Err: ttl=0");
+			// System.out.println("Err: ttl=0");
 			return; }
 
 		// Reset checksum now that TTL is decremented
@@ -177,7 +177,7 @@ public class Router extends Device
 		{
 			if (ipPacket.getDestinationAddress() == iface.getIpAddress())
 			{ 
-				System.out.println("Err: router interface");
+				// System.out.println("Err: router interface");
 				return; }
 		}
 
@@ -196,7 +196,7 @@ public class Router extends Device
 		// Make sure it's an IP packet
 		if (etherPacket.getEtherType() != Ethernet.TYPE_IPv4)
 		{ return; }
-		System.out.println("Forward IP packet");
+		// System.out.println("Forward IP packet");
 
 		// Get IP header
 		IPv4 ipPacket = (IPv4)etherPacket.getPayload();
@@ -216,7 +216,7 @@ public class Router extends Device
 		Iface outIface = bestMatch.getInterface();
 		if (outIface == inIface)
 		{ 
-			System.out.println("Err: outeqin");
+			// System.out.println("Err: outeqin");
 			return; }
 
 		// Set source MAC address in Ethernet header
@@ -265,7 +265,7 @@ public class Router extends Device
 	This method encapsulates and sends a RIPv2 packet through a specific interface 
 	*/
 	public void floodRIPPacket(Iface iface, RIPv2 rip){
-		System.out.println("floodRIPPacket called");
+		// System.out.println("floodRIPPacket called");
 		UDP udp = new UDP();
 		udp.setPayload((IPacket)rip); 
 		udp.setSourcePort(UDP.RIP_PORT);
@@ -283,10 +283,10 @@ public class Router extends Device
 		eth.setDestinationMACAddress("FF:FF:FF:FF:FF:FF");
 		eth.setEtherType(Ethernet.TYPE_IPv4); 
 		
-		System.out.println("Sending RIPv2 packet.");
-		System.out.println("RIPv2 packet info are:\n" + eth);
+		// System.out.println("Sending RIPv2 packet.");
+		// System.out.println("RIPv2 packet info are:\n" + eth);
 		this.sendPacket( eth,  iface);
-		System.out.println("RIPv2 packet sent.\n");
+		// System.out.println("RIPv2 packet sent.\n");
 
 	}
 
@@ -294,7 +294,7 @@ public class Router extends Device
 		
 		if(dvTable != null && dvTable.size() !=0 ){
 			// Debugging
-			System.out.println("periodicRIPFlood");
+			// System.out.println("periodicRIPFlood");
 			// !Debugging
 			//send the RIP packet to the neighbor 
 			dvTable.cleanUp();
@@ -332,7 +332,7 @@ public class Router extends Device
 
 	private void handleRIPPacket(RIPv2 rip, int sourceAddr, Iface inIface){
 		// Debugging
-		System.out.println("called handleRIPPacket. \nrip packet content: " + rip + "\nsourceAddr: " + IPv4.fromIPv4Address(sourceAddr));
+		// System.out.println("called handleRIPPacket. \nrip packet content: " + rip + "\nsourceAddr: " + IPv4.fromIPv4Address(sourceAddr));
 		// !Debugging
 		
 		for (RIPv2Entry e: rip.getEntries()){
