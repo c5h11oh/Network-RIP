@@ -1,4 +1,5 @@
 package edu.wisc.cs.sdn.vnet.rt;
+import edu.wisc.cs.sdn.vnet.Iface; 
 
 import java.lang.System;
 
@@ -12,6 +13,7 @@ public class DVEntry {
     protected long initTime;
     protected boolean self;
     protected int nexthop;
+    protected Iface inIface; 
 
     public DVEntry(){}
 
@@ -22,6 +24,7 @@ public class DVEntry {
         this.self = self;
         this.nexthop = nexthop;
         this.initTime = System.currentTimeMillis();
+        //this.inIface = inIface; 
     }
 
     // IP, mask
@@ -43,6 +46,14 @@ public class DVEntry {
     public int getNexthop(){
         return this.nexthop; 
     }
+
+    // public void setIface(Iface iface){
+    //     this.inIface = iface; 
+    // }
+
+    // public Iface getInIface(){
+    //     return this.inIface; 
+    // }
     
     // Inittime
     public long getInitTime(){
