@@ -355,6 +355,7 @@ public class Router extends Device
 					s = true; //direct neighbor 
 				}
 				if(e.getMetric() <16){
+					System.out.println("Router:358 - SourceAddr = " + IPv4.fromIPv4Address(sourceAddr));
 					DVEntry dveNew = new DVEntry(e.getAddress(), e.getSubnetMask(), e.getMetric()+1, s,  sourceAddr ); 
 					dvTable.addEntry(dveNew); 
 				}
