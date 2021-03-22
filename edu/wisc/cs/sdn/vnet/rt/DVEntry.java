@@ -38,6 +38,11 @@ public class DVEntry {
     public boolean isSelf(){
         return this.self;
     }
+
+    //next hop 
+    public int getNexthop(){
+        return this.nexthop; 
+    }
     
     // Inittime
     public long getInitTime(){

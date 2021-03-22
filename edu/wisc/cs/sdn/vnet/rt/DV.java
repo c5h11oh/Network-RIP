@@ -21,6 +21,10 @@ public class DV {
         return this.entries;
     }
 
+    public int size(){
+        return entries.size();
+    }
+
     /* 
         Add entry to the distance vector entry list.
         Do note: This method does not check if there are duplicates in the table. It is recommended to call "findEntry" and deal with (ip, mask) exist condition properly beforehand.

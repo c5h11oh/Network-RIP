@@ -89,56 +89,9 @@ public class Router extends Device
 			//init route table 
 			this.routeTable.insert(iface.getIpAddress(), 0, iface.getSubnetMask(), iface);
 			
-		}
-		
+		}	
 		//send RIP request out all ifaces 
-		floodRIPRequest(); 
-		//RIPv2Entry(int address, int subnetMask, int metric)
-		long updateTime = System.currentTimeMillis() + 10;
-		
-		while(dvTable != null && dvTable.size() !=0 ){
-			// Debugging
-			System.out.println("send out RIPv2 info");
-			// !Debugging
-
-			//send update per 10 s
-			if(System.currentTimeMillis() >= updateTime){ 
-				//send the RIP packet to the neighbor 
-				for (Iface iface : this.interfaces.values()){	
-					List<RIPv2Entry> updateLs = new ArrayList<RIPv2Entry>(); 
-
-					for(Map.Entry<List<Integer>, ArrayList<Object>> e: dvTable.entrySet() ){
-						ArrayList<Object> values = e.getValue(); 
-						RIPv2Entry updateE; 
-						//check if still have ttl
-						if(((int)values.get(1)+30)< System.currentTimeMillis()){
-							//check if need poison reverse 
-							if((int)values.get(3) == iface.getIpAddress()){ // TODO: should be the receiver's IP address?
-								updateE = new RIPv2Entry(e.getKey().get(0),e.getKey().get(1), 16 );
-							}else{
-								updateE = new RIPv2Entry(e.getKey().get(0),e.getKey().get(1), (int) values.get(0)); 
-							}
-							updateLs.add(updateE); 
-
-						}else{ //no ttl 
-							if((int)values.get(3) != iface.getIpAddress()){
-								//delete the entry
-								dvTable.remove(e.getKey()); 
-							}
-						}
-
-					}
-
-					//forward with this RIPEntry list 
-					RIPv2 updatePkt = new RIPv2();
-					updatePkt.setCommand(RIPv2.COMMAND_RESPONSE);
-					updatePkt.setEntries((List<RIPv2Entry>) updateLs); 
-					floodRIPPacket(iface, updatePkt); 
-				}
-
-				updateTime = System.currentTimeMillis() +10; 
-			}
-		}
+		floodRIPRequest(); 	
 		
 	}
 
@@ -315,7 +268,7 @@ public class Router extends Device
 			ArrayList<Object> v = new ArrayList<Object>();
 			v.add(e.getMetric()+1); //updated path cost 
 			v.add(System.currentTimeMillis()); //time stamp
-			v.add(false); 
+			v.add(false); //TODO: should check 
 			v.add(sourceAddr);
 
 			if(dvTable.containsKey(ls)){
@@ -358,5 +311,44 @@ public class Router extends Device
 		this.sendPacket( eth,  iface); // TODO: should it be sendPacket?
 		System.out.println("RIPv2 packet sent.\n");
 
+	}
+
+	public void periodicRIPFlood(Iface iface){
+		
+		if(dvTable != null && dvTable.size() !=0 ){
+			// Debugging
+			System.out.println("send out RIPv2 info");
+			// !Debugging
+			//send the RIP packet to the neighbor 
+			for (Iface iface : this.interfaces.values()){	
+				List<RIPv2Entry> updateLs = new ArrayList<RIPv2Entry>(); 
+				List<DVEntry> entries = dvTable.getEntries(); 
+
+				dvTable.cleanUp(); 
+				DV updateTable = new DV(); 
+
+				for(DVEntry e : dvTable.getEntries()){
+					if(e.getNexthop() == iface.getIpAddress()){
+						DVEntry poison = e;
+						poison.setMetric(16);
+						updateTable.addEntry(poison);
+
+					}else{
+						updateTable.addEntry(e);
+					}
+				}
+
+				//forward with this RIPEntry list 
+				RIPv2 updatePkt = updateTable.toRIPv2(); 
+				updatePkt.setCommand(RIPv2.COMMAND_RESPONSE);
+				updatePkt.setEntries((List<RIPv2Entry>) updateLs); 
+				floodRIPPacket(iface, updatePkt); 
+			}
+
+			
+		
+	}
+
+		return; 
 	}
 }
