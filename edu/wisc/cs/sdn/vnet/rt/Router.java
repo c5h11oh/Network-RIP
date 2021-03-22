@@ -231,7 +231,10 @@ public class Router extends Device
 		ArpEntry arpEntry = this.arpCache.lookup(nextHop);
 		if (null == arpEntry)
 		{ 
-			System.out.println("Err: arpentry");
+			System.out.println("Err: arpentry.");
+			System.out.println("routeTable: \n" + routeTable + "\n\n");
+			System.out.println("arpCache:\n" + this.arpCache + "\n\n");
+			System.out.println("nextHop:\n" + nextHop + "\n\n");
 			return; }
 		etherPacket.setDestinationMACAddress(arpEntry.getMac().toBytes());
 
