@@ -350,7 +350,7 @@ public class Router extends Device
 			// !Debugging
 			//send the RIP packet to the neighbor 
 			for (Iface iface : this.interfaces.values()){	
-				//List<RIPv2Entry> updateLs = new ArrayList<RIPv2Entry>(); 
+				List<RIPv2Entry> updateLs = new ArrayList<RIPv2Entry>(); 
 				//List<DVEntry> entries = dvTable.getEntries(); 
 
 				dvTable.cleanUp(); 
@@ -370,7 +370,7 @@ public class Router extends Device
 				//forward with this RIPEntry list 
 				RIPv2 updatePkt = updateTable.toRIPv2(); 
 				updatePkt.setCommand(RIPv2.COMMAND_RESPONSE);
-				updatePkt.setEntries((List<RIPv2Entry>) updateLs); 
+				//updatePkt.setEntries((List<RIPv2Entry>) updateLs); 
 				floodRIPPacket(iface, updatePkt); 
 			}
 
