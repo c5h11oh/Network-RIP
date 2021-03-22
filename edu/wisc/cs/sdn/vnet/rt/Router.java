@@ -283,7 +283,7 @@ public class Router extends Device
 					s = true; //direct neighbor 
 				}
 				if(e.getMetric() <16){
-					DVEntry dveNew = new DVEntry(e.getIpAddress(), e.getSubnetMask(), e.getMetric()+1, s,  sourceAddr ); 
+					DVEntry dveNew = new DVEntry(e.getAddress(), e.getSubnetMask(), e.getMetric()+1, s,  sourceAddr ); 
 					dvTable.addEntry(dveNew); 
 				}
 			}
@@ -342,7 +342,7 @@ public class Router extends Device
 
 	}
 
-	public void periodicRIPFlood(Iface iface){
+	public void periodicRIPFlood(){
 		
 		if(dvTable != null && dvTable.size() !=0 ){
 			// Debugging
@@ -350,8 +350,8 @@ public class Router extends Device
 			// !Debugging
 			//send the RIP packet to the neighbor 
 			for (Iface iface : this.interfaces.values()){	
-				List<RIPv2Entry> updateLs = new ArrayList<RIPv2Entry>(); 
-				List<DVEntry> entries = dvTable.getEntries(); 
+				//List<RIPv2Entry> updateLs = new ArrayList<RIPv2Entry>(); 
+				//List<DVEntry> entries = dvTable.getEntries(); 
 
 				dvTable.cleanUp(); 
 				DV updateTable = new DV(); 
